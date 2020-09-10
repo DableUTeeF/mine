@@ -7,7 +7,7 @@ if __name__ == '__main__':
     open('anns/c.csv', 'w')
     classes = []
     with open('anns/ann.csv', 'w') as wr:
-        path = f'anns/xmls'
+        path = f'/media/palm/BiggerData/mine/new/a/PU_23550891_00_20200905_203537_BKQ02-005.mkv'
         for file in os.listdir(path):
             tree = ET.parse(os.path.join(path, file))
             if len(tree.findall('object')) == 0:
@@ -33,6 +33,8 @@ if __name__ == '__main__':
                         wr.write('\n')
                 elif 'name' in elem.tag:
                     cls = elem.text
+                    if 'car' in cls:
+                        cls = 'car'
                 elif 'xmin' in elem.tag:
                     xmin = elem.text
                 elif 'ymin' in elem.tag:
