@@ -13,7 +13,7 @@ keras.backend.set_session(sess)
 
 if __name__ == '__main__':
     prediction_model = models.load_model('snapshots/infer_model_test.h5')
-    src = '/media/palm/BiggerData/mine/new/i/PU_23550891_00_20200905_203537_BKQ02-005'
+    src = '/media/palm/BiggerData/mine/new/i/PU_23550891_00_20200905_214516_BKQ02-003'
     for f in os.listdir(src):
         frame = cv2.imread(os.path.join(src, f))
         frame, scale = resize_image(frame)
