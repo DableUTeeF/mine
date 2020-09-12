@@ -225,6 +225,7 @@ def create_generators(args, preprocess_image):
         'image_min_side': args.image_min_side,
         'image_max_side': args.image_max_side,
         'preprocess_image': preprocess_image,
+        'grayscale': args.grayscale
     }
 
     # create random transform generator for augmenting training data
@@ -417,6 +418,7 @@ def parse_args(args):
                         default='./snapshots')
     parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
     parser.add_argument('--no-snapshots', help='Disable saving snapshots.', dest='snapshots', action='store_false')
+    parser.add_argument('--grayscale', help='Use greyscale.', dest='grayscale', action='store_true')
     parser.add_argument('--no-evaluation', help='Disable per epoch evaluation.', dest='evaluation',
                         action='store_false')
     parser.add_argument('--freeze-backbone', help='Freeze training of backbone layers.', action='store_true')
