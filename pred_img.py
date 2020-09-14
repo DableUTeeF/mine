@@ -1,4 +1,4 @@
-from retinanet.utils.image import preprocess_image, resize_image
+from retinanet.utils.image import preprocess_image, resize_image, read_image_bgr
 from retinanet import models
 import numpy as np
 import cv2
@@ -14,15 +14,19 @@ keras.backend.set_session(sess)
 if __name__ == '__main__':
     prediction_model = models.load_model('snapshots/infer_model_test.h5')
     root = '/media/palm/BiggerData/mine/new/i/'
-    srcs = [
-        'PU_23550891_00_20200905_214516_BKQ02-003',
-        'PU_23550891_00_20200905_230000_BKQ02',
-    ]
+    # srcs = [
+    #     'PU_23550891_00_20200905_214516_BKQ02-003',
+    #     'PU_23550891_00_20200905_230000_BKQ02',
+    # ]
+    srcs = os.listdir(root)
     for p in srcs:
         src = os.path.join(root, p)
         os.makedirs(f'out/img/{p}', exist_ok=True)
         for f in os.listdir(src):
-            frame = cv2.imread(os.path.join(src, f))
+            frame = read_image_bgr(os.path.join(src, f))
+
+            im = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = np.dstack((im, im, im))
             frame, scale = resize_image(frame)
             image = preprocess_image(frame)
             boxes, scores, labels = prediction_model.predict_on_batch(np.expand_dims(image, axis=0))

@@ -7,11 +7,12 @@ if __name__ == '__main__':
     open('anns/c.csv', 'w')
     classes = []
     root = '/media/palm/BiggerData/mine/new/a/'
-    paths = ['PU_23550891_00_20200905_203537_BKQ02-005.mkv',
-             'PU_23550891_00_20200905_214516_BKQ02-003.mkv',
-             'PU_23550891_00_20200905_230000_BKQ02.mkv',
-             'PU_23550891_00_20200906_000001_BKQ02.mkv',
-             ]
+    # paths = ['PU_23550891_00_20200905_203537_BKQ02-005.mkv',
+    #          'PU_23550891_00_20200905_214516_BKQ02-003.mkv',
+    #          'PU_23550891_00_20200905_230000_BKQ02.mkv',
+    #          'PU_23550891_00_20200906_000001_BKQ02.mkv',
+    #          ]
+    paths = os.listdir(root)
 
     with open('anns/ann.csv', 'w') as wr:
         for p in paths:

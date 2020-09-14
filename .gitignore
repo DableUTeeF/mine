@@ -1,1 +1,12 @@
 .idea/*
+detr/datasets/__pycache__
+detr/models/__pycache__
+detr/util/__pycache__
+retinanet/__pycache__
+retinanet/backend/__pycache__
+retinanet/bin/__pycache__
+retinanet/callbacks/__pycache__
+retinanet/layers/__pycache__
+retinanet/models/__pycache__
+retinanet/preprocessing/__pycache__
+retinanet/utils/__pycache__
