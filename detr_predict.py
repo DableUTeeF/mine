@@ -1,11 +1,11 @@
 import torch
-from models.detr import DETR, PostProcess
-from models.position_encoding import PositionEmbeddingLearned, PositionEmbeddingSine
-from models.backbone import Backbone, Joiner, MNetBackbone
-from models.transformer import Transformer
+from detr.models.detr import DETR, PostProcess
+from detr.models.position_encoding import PositionEmbeddingLearned, PositionEmbeddingSine
+from detr.models.backbone import Backbone, Joiner, MNetBackbone
+from detr.models.transformer import Transformer
 from PIL import Image
 import torchvision.transforms as T
-from evaluate_util import add_bbox, all_annotation_from_instance, create_csv_training_instances
+from detr.evaluate_util import add_bbox, all_annotation_from_instance, create_csv_training_instances
 import time
 import cv2
 import numpy as np
