@@ -21,13 +21,13 @@ if __name__ == '__main__':
     srcs = os.listdir(root)
     for p in srcs:
         src = os.path.join(root, p)
-        os.makedirs(f'out/img/{p}', exist_ok=True)
+        os.makedirs(f'/media/palm/BiggerData/mine/out/i/{p}', exist_ok=True)
         for f in os.listdir(src):
             frame = read_image_bgr(os.path.join(src, f))
 
             im = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame = np.dstack((im, im, im))
-            frame, scale = resize_image(frame)
+            frame, scale = resize_image(frame, min_side=720, max_side=1280)
             image = preprocess_image(frame)
             boxes, scores, labels = prediction_model.predict_on_batch(np.expand_dims(image, axis=0))
             for box, score, label in zip(boxes[0], scores[0], labels[0]):
@@ -36,6 +36,6 @@ if __name__ == '__main__':
                     break
                 b = box.astype(int)
 
-                frame = add_bbox(frame, b, label, ['human', 'car', 'crane'], score)
-                cv2.imwrite(os.path.join(f'out/img/{p}', f), frame)
+                frame = add_bbox(frame, b, label, ['crane', 'car', 'human', ], score)
+                cv2.imwrite(os.path.join(f'/media/palm/BiggerData/mine/out/i/{p}', f), frame)
     cv2.destroyAllWindows()

@@ -14,6 +14,10 @@ keras.backend.set_session(sess)
 if __name__ == '__main__':
     prediction_model = models.load_model('snapshots/infer_model_test.h5')
 
+    """
+    
+    """
+
     for file in os.listdir('/media/palm/BiggerData/mine/new/v/'):
         cap = cv2.VideoCapture(os.path.join('/media/palm/BiggerData/mine/new/v/', file))
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
