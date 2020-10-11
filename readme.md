@@ -18,7 +18,7 @@ sudo apt install tensorflow-model-server
 ```
 nohup tensorflow_model_server \
   --rest_api_port=8501 \
-  --model_name=fashion_model \
+  --model_name=retinanet \
   --model_base_path='/home/palm/PycharmProjects/test_serving/weights' >server.log 2>&1
 
 ```
