@@ -13,7 +13,8 @@ keras.backend.set_session(sess)
 
 if __name__ == '__main__':
     prediction_model = models.load_model('snapshots/infer_model_test.h5')
-
+    # prediction_model.summary()
+    # exit()
     """
     
     """
