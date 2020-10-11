@@ -21,10 +21,11 @@ from ..utils.image import read_image_bgr
 import numpy as np
 from PIL import Image
 from six import raise_from
-import cv2
+
 import csv
 import sys
 import os.path
+from collections import OrderedDict
 
 
 def _parse(value, function, fmt):
@@ -44,7 +45,7 @@ def _parse(value, function, fmt):
 def _read_classes(csv_reader):
     """ Parse the classes file given by csv_reader.
     """
-    result = {}
+    result = OrderedDict()
     for line, row in enumerate(csv_reader):
         line += 1
 
@@ -63,16 +64,14 @@ def _read_classes(csv_reader):
 def _read_annotations(csv_reader, classes):
     """ Read annotations from the csv_reader.
     """
-    result = {}
+    result = OrderedDict()
     for line, row in enumerate(csv_reader):
         line += 1
 
         try:
             img_file, x1, y1, x2, y2, class_name = row[:6]
         except ValueError:
-            raise_from(ValueError(
-                'line {}: format should be \'img_file,x1,y1,x2,y2,class_name\' or \'img_file,,,,,\''.format(line)),
-                       None)
+            raise_from(ValueError('line {}: format should be \'img_file,x1,y1,x2,y2,class_name\' or \'img_file,,,,,\''.format(line)), None)
 
         if img_file not in result:
             result[img_file] = []
@@ -119,12 +118,11 @@ class CSVGenerator(Generator):
     """
 
     def __init__(
-            self,
-            csv_data_file,
-            csv_class_file,
-            base_dir=None,
-            grayscale=False,
-            **kwargs
+        self,
+        csv_data_file,
+        csv_class_file,
+        base_dir=None,
+        **kwargs
     ):
         """ Initialize a CSV data generator.
 
@@ -134,10 +132,9 @@ class CSVGenerator(Generator):
             base_dir: Directory w.r.t. where the files are to be searched (defaults to the directory containing the csv_data_file).
         """
         self.image_names = []
-        self.image_data = {}
-        self.base_dir = base_dir
-        self.images = {}
-        self.grayscale = grayscale
+        self.image_data  = {}
+        self.base_dir    = base_dir
+
         # Take base_dir from annotations file if not explicitly specified.
         if self.base_dir is None:
             self.base_dir = os.path.dirname(csv_data_file)
@@ -160,9 +157,6 @@ class CSVGenerator(Generator):
         except ValueError as e:
             raise_from(ValueError('invalid CSV annotations file: {}: {}'.format(csv_data_file, e)), None)
         self.image_names = list(self.image_data.keys())
-
-        # for name in self.image_names:
-        #     self.load_if_not_yet(name)
 
         super(CSVGenerator, self).__init__(**kwargs)
 
@@ -208,24 +202,15 @@ class CSVGenerator(Generator):
         image = Image.open(self.image_path(image_index))
         return float(image.width) / float(image.height)
 
-    def load_if_not_yet(self, image_path):
-        if image_path not in self.images:
-            self.images[image_path] = read_image_bgr(image_path)
-        return self.images[image_path]
-
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        if self.grayscale:
-            im = cv2.cvtColor(read_image_bgr(self.image_path(image_index)), cv2.COLOR_BGR2GRAY)
-            return np.dstack((im, im, im))
         return read_image_bgr(self.image_path(image_index))
-        # return self.load_if_not_yet(self.image_path(image_index))
 
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
         """
-        path = self.image_names[image_index]
+        path        = self.image_names[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
 
         for idx, annot in enumerate(self.image_data[path]):

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import keras
+from tensorflow import keras
 from ..utils.eval import evaluate
 
 
@@ -23,15 +23,15 @@ class Evaluate(keras.callbacks.Callback):
     """
 
     def __init__(
-            self,
-            generator,
-            iou_threshold=0.5,
-            score_threshold=0.05,
-            max_detections=100,
-            save_path=None,
-            tensorboard=None,
-            weighted_average=False,
-            verbose=1
+        self,
+        generator,
+        iou_threshold=0.5,
+        score_threshold=0.05,
+        max_detections=100,
+        save_path=None,
+        tensorboard=None,
+        weighted_average=False,
+        verbose=1
     ):
         """ Evaluate a given dataset using a given model at the end of every epoch during training.
 
@@ -45,14 +45,14 @@ class Evaluate(keras.callbacks.Callback):
             weighted_average : Compute the mAP using the weighted average of precisions among classes.
             verbose          : Set the verbosity level, by default this is set to 1.
         """
-        self.generator = generator
-        self.iou_threshold = iou_threshold
+        self.generator       = generator
+        self.iou_threshold   = iou_threshold
         self.score_threshold = score_threshold
-        self.max_detections = max_detections
-        self.save_path = save_path
-        self.tensorboard = tensorboard
+        self.max_detections  = max_detections
+        self.save_path       = save_path
+        self.tensorboard     = tensorboard
         self.weighted_average = weighted_average
-        self.verbose = verbose
+        self.verbose         = verbose
 
         super(Evaluate, self).__init__()
 
@@ -60,7 +60,7 @@ class Evaluate(keras.callbacks.Callback):
         logs = logs or {}
 
         # run evaluation
-        average_precisions = evaluate(
+        average_precisions, _ = evaluate(
             self.generator,
             self.model,
             iou_threshold=self.iou_threshold,
@@ -83,13 +83,15 @@ class Evaluate(keras.callbacks.Callback):
         else:
             self.mean_ap = sum(precisions) / sum(x > 0 for x in total_instances)
 
-        if self.tensorboard is not None and self.tensorboard.writer is not None:
+        if self.tensorboard:
             import tensorflow as tf
-            summary = tf.Summary()
-            summary_value = summary.value.add()
-            summary_value.simple_value = self.mean_ap
-            summary_value.tag = "mAP"
-            self.tensorboard.writer.add_summary(summary, epoch)
+            writer = tf.summary.create_file_writer(self.tensorboard.log_dir)
+            with writer.as_default():
+                tf.summary.scalar("mAP", self.mean_ap, step=epoch)
+                if self.verbose == 1:
+                    for label, (average_precision, num_annotations) in average_precisions.items():
+                        tf.summary.scalar("AP_" + self.generator.label_to_name(label), average_precision, step=epoch)
+                writer.flush()
 
         logs['mAP'] = self.mean_ap
 

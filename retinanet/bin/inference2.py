@@ -6,7 +6,7 @@ from retinanet import models
 import cv2
 import numpy as np
 import time
-from boxutils import add_bbox
+from ..boxutils import add_bbox
 
 
 if __name__ == '__main__':

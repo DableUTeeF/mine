@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import numpy as np
-import keras
+from tensorflow import keras
 
 from ..utils.compute_overlap import compute_overlap
 
@@ -29,12 +29,11 @@ class AnchorParameters:
         ratios  : List of ratios to use per location in a feature map.
         scales  : List of scales to use per location in a feature map.
     """
-
     def __init__(self, sizes, strides, ratios, scales):
-        self.sizes = sizes
+        self.sizes   = sizes
         self.strides = strides
-        self.ratios = ratios
-        self.scales = scales
+        self.ratios  = ratios
+        self.scales  = scales
 
     def num_anchors(self):
         return len(self.ratios) * len(self.scales)
@@ -44,27 +43,27 @@ class AnchorParameters:
 The default anchor parameters.
 """
 AnchorParameters.default = AnchorParameters(
-    sizes=[32, 64, 128, 256, 512],
-    strides=[8, 16, 32, 64, 128],
-    ratios=np.array([0.5, 1, 2], keras.backend.floatx()),
-    scales=np.array([2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)], keras.backend.floatx()),
+    sizes   = [32, 64, 128, 256, 512],
+    strides = [8, 16, 32, 64, 128],
+    ratios  = np.array([0.5, 1, 2], keras.backend.floatx()),
+    scales  = np.array([2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)], keras.backend.floatx()),
 )
 
 
 def anchor_targets_bbox(
-        anchors,
-        image_group,
-        annotations_group,
-        num_classes,
-        negative_overlap=0.4,
-        positive_overlap=0.5
+    anchors,
+    image_group,
+    annotations_group,
+    num_classes,
+    negative_overlap=0.4,
+    positive_overlap=0.5
 ):
     """ Generate anchor targets for bbox detection.
 
     Args
         anchors: np.array of annotations of shape (N, 4) for (x1, y1, x2, y2).
         image_group: List of BGR images.
-        annotations_group: List of annotations (np.array of shape (N, 5) for (x1, y1, x2, y2, label)).
+        annotations_group: List of annotation dictionaries with each annotation containing 'labels' and 'bboxes' of an image.
         num_classes: Number of classes to predict.
         mask_shape: If the image is padded with zeros, mask_shape can be used to mark the relevant part of the image.
         negative_overlap: IoU overlap for negative anchors (all anchors with overlap < negative_overlap are negative).
@@ -78,35 +77,31 @@ def anchor_targets_bbox(
                       last column defines anchor states (-1 for ignore, 0 for bg, 1 for fg).
     """
 
-    assert (len(image_group) == len(annotations_group)), "The length of the images and annotations need to be equal."
-    assert (len(annotations_group) > 0), "No data received to compute anchor targets for."
+    assert(len(image_group) == len(annotations_group)), "The length of the images and annotations need to be equal."
+    assert(len(annotations_group) > 0), "No data received to compute anchor targets for."
     for annotations in annotations_group:
-        assert ('bboxes' in annotations), "Annotations should contain bboxes."
-        assert ('labels' in annotations), "Annotations should contain labels."
+        assert('bboxes' in annotations), "Annotations should contain bboxes."
+        assert('labels' in annotations), "Annotations should contain labels."
 
     batch_size = len(image_group)
 
-    regression_batch = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=keras.backend.floatx())
-    labels_batch = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=keras.backend.floatx())
+    regression_batch  = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=keras.backend.floatx())
+    labels_batch      = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=keras.backend.floatx())
 
     # compute labels and regression targets
     for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
         if annotations['bboxes'].shape[0]:
             # obtain indices of gt annotations with the greatest overlap
-            positive_indices, ignore_indices, argmax_overlaps_inds = compute_gt_annotations(anchors,
-                                                                                            annotations['bboxes'],
-                                                                                            negative_overlap,
-                                                                                            positive_overlap)
+            positive_indices, ignore_indices, argmax_overlaps_inds = compute_gt_annotations(anchors, annotations['bboxes'], negative_overlap, positive_overlap)
 
-            labels_batch[index, ignore_indices, -1] = -1
-            labels_batch[index, positive_indices, -1] = 1
+            labels_batch[index, ignore_indices, -1]       = -1
+            labels_batch[index, positive_indices, -1]     = 1
 
-            regression_batch[index, ignore_indices, -1] = -1
+            regression_batch[index, ignore_indices, -1]   = -1
             regression_batch[index, positive_indices, -1] = 1
 
             # compute target class labels
-            labels_batch[
-                index, positive_indices, annotations['labels'][argmax_overlaps_inds[positive_indices]].astype(int)] = 1
+            labels_batch[index, positive_indices, annotations['labels'][argmax_overlaps_inds[positive_indices]].astype(int)] = 1
 
             regression_batch[index, :, :-1] = bbox_transform(anchors, annotations['bboxes'][argmax_overlaps_inds, :])
 
@@ -115,17 +110,17 @@ def anchor_targets_bbox(
             anchors_centers = np.vstack([(anchors[:, 0] + anchors[:, 2]) / 2, (anchors[:, 1] + anchors[:, 3]) / 2]).T
             indices = np.logical_or(anchors_centers[:, 0] >= image.shape[1], anchors_centers[:, 1] >= image.shape[0])
 
-            labels_batch[index, indices, -1] = -1
+            labels_batch[index, indices, -1]     = -1
             regression_batch[index, indices, -1] = -1
 
     return regression_batch, labels_batch
 
 
 def compute_gt_annotations(
-        anchors,
-        annotations,
-        negative_overlap=0.4,
-        positive_overlap=0.5
+    anchors,
+    annotations,
+    negative_overlap=0.4,
+    positive_overlap=0.5
 ):
     """ Obtain indices of gt annotations with the greatest overlap.
 
@@ -169,7 +164,10 @@ def layer_shapes(image_shape, model):
     for layer in model.layers[1:]:
         nodes = layer._inbound_nodes
         for node in nodes:
-            inputs = [shape[lr.name] for lr in node.inbound_layers]
+            if isinstance(node.inbound_layers, keras.layers.Layer):
+                inputs = [shape[node.inbound_layers.name]]
+            else:
+                inputs = [shape[lr.name] for lr in node.inbound_layers]
             if not inputs:
                 continue
             shape[layer.name] = layer.compute_output_shape(inputs[0] if len(inputs) == 1 else inputs)
@@ -180,7 +178,6 @@ def layer_shapes(image_shape, model):
 def make_shapes_callback(model):
     """ Make a function for getting the shape of the pyramid levels.
     """
-
     def get_shapes(image_shape, pyramid_levels):
         shape = layer_shapes(image_shape, model)
         image_shapes = [shape["P{}".format(level)][1:3] for level in pyramid_levels]
@@ -205,10 +202,10 @@ def guess_shapes(image_shape, pyramid_levels):
 
 
 def anchors_for_shape(
-        image_shape,
-        pyramid_levels=None,
-        anchor_params=None,
-        shapes_callback=None,
+    image_shape,
+    pyramid_levels=None,
+    anchor_params=None,
+    shapes_callback=None,
 ):
     """ Generators anchors for a given shape.
 
@@ -241,7 +238,7 @@ def anchors_for_shape(
             scales=anchor_params.scales
         )
         shifted_anchors = shift(image_shapes[idx], anchor_params.strides[idx], anchors)
-        all_anchors = np.append(all_anchors, shifted_anchors, axis=0)
+        all_anchors     = np.append(all_anchors, shifted_anchors, axis=0)
 
     return all_anchors
 
@@ -315,6 +312,9 @@ def generate_anchors(base_size=16, ratios=None, scales=None):
 def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     """Compute bounding-box regression targets for an image."""
 
+    # The Mean and std are calculated from COCO dataset.
+    # Bounding box normalization was firstly introduced in the Fast R-CNN paper.
+    # See https://github.com/fizyr/keras-retinanet/issues/1273#issuecomment-585828825  for more details
     if mean is None:
         mean = np.array([0, 0, 0, 0])
     if std is None:
@@ -330,9 +330,12 @@ def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     elif not isinstance(std, np.ndarray):
         raise ValueError('Expected std to be a np.ndarray, list or tuple. Received: {}'.format(type(std)))
 
-    anchor_widths = anchors[:, 2] - anchors[:, 0]
+    anchor_widths  = anchors[:, 2] - anchors[:, 0]
     anchor_heights = anchors[:, 3] - anchors[:, 1]
 
+    # According to the information provided by a keras-retinanet author, they got marginally better results using
+    # the following way of bounding box parametrization.
+    # See https://github.com/fizyr/keras-retinanet/issues/1273#issuecomment-585828825 for more details
     targets_dx1 = (gt_boxes[:, 0] - anchors[:, 0]) / anchor_widths
     targets_dy1 = (gt_boxes[:, 1] - anchors[:, 1]) / anchor_heights
     targets_dx2 = (gt_boxes[:, 2] - anchors[:, 2]) / anchor_widths
